@@ -42,9 +42,14 @@ void acceleration(void){
     
 }
 
+void init_servo(){
+    
+}
+
 int main(void) {
     init();  //initialize board hardware
     lcd_cursor(0, 0); 
+    init_servo();
     acceleration();  
 
     return 0;
