@@ -1,3 +1,11 @@
+/*
+Names: Joshua Livergood and Danny Moreno
+Lab1, part 1
+Causes an LED to blink using PWM
+*/
+
+
+
 #include "globals.h"
 #include <util/delay.h>
 #include <avr/io.h>

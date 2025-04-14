@@ -1,3 +1,10 @@
+/*
+Names: Joshua Livergood and Danny Moreno
+Lab1, part 2
+Prints out names scrolling accross the LCD
+*/
+
+
 #include "globals.h"
 #include <util/delay.h>
 #include <avr/io.h>

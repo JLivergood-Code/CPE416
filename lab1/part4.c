@@ -1,3 +1,9 @@
+/*
+Names: Joshua Livergood and Danny Moreno
+Lab1, part 4
+Display will move by tilting the device
+*/
+
 #include "globals.h"
 #include <util/delay.h>
 #include <avr/io.h>

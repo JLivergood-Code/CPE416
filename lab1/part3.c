@@ -1,3 +1,10 @@
+/*
+Names: Joshua Livergood and Danny Moreno
+Lab1, part 3
+Creates a Pong game that will have LED's turn on in certain directions, 
+requiring a button press on the ends to continue the game
+*/
+
 #include "globals.h"
 #include <avr/io.h>
 #include <avr/interrupt.h>
