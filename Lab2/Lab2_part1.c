@@ -43,7 +43,9 @@ void acceleration(void){
 }
 
 void init_servo(){
-    
+    //connect pins and stuff
+    digital_dir(0, 1); //Set pin 0 to output
+    digital_dir(1, 1); //Set pin 1 to output
 }
 
 int main(void) {
