@@ -52,7 +52,8 @@ int main(void) {
     init();  //initialize board hardware
     lcd_cursor(0, 0); 
     print_string("Speed:");
-    acceleration();  
+    motor(0, 0);
+    motor(1, 0);
 
     return 0;
 }

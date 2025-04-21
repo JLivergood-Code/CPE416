@@ -2,59 +2,220 @@
 #include <util/delay.h>
 #include <avr/io.h>
 #include <avr/interrupt.h>
+#include <stdio.h>
 
-#define AGGRO 0
-#define FEAR 1
 
-#define SENSOR0 0
-#define SENSOR1 1
 
-#define LEFT 0
-#define RIGHT 1
-
-void motor(uint8_t num, int8_t speed) { //num will be 0 or 1 corresponding to the left or right motor.  speed will be a number from -100 (full speed reverse) to +100 (full speed forward).
-    //This function should call set_servo to spin the motor
-    //A call to set_servo with position of 127 should stop the motor.  If your motor spins, you can calibrate your motors by adjusting the servo potentiometer with a screwdriver.
-    //code to translate speed to servo position
-    
-    int servo_position = 0.3*speed + 127; //translate speed to servo position
-    if (servo_position < 97) {
-        servo_position = 97; //Clamp to minimum
+void braitenberg(void){
+    char buffer[16];
+    int servo0_position, servo1_position;
+    u16 light_0, light_1;
+    static u08 mode = 0; // 0 = fear, 1 = aggression
+    if (get_btn() == 1 && mode == 0) {
+        mode = 1; // Switch to aggression mode
+    } else if (get_btn() == 1 && mode == 1) {
+        mode = 0; // Switch to fear mode
     }
-    if (servo_position > 157) {
-        servo_position = 157; //Clamp to maximum
-    }
-    if (num == 0) {
-        set_servo(0, servo_position); //Set left motor
+    if (mode == 0) {//Fear mode
         
-    } else if (num == 1) {
-        set_servo(1, servo_position); //Set right motor
+        light_0 = analog(ANALOG0_PIN);
+        light_1 = analog(ANALOG1_PIN);
+        _delay_ms(300);          // Small delay so it's readable
+        clear_screen();         // Clear previous content
+        lcd_cursor(0, 0);
+        print_string("F Mode");
+        if(light_0 < light_1) {
+            // Move left
+            servo0_position = (light_0 - 220) * 30 / (240 - 220) + 127;
+            servo1_position = 127 - (light_1 - 220) * 30 / (240 - 220);
+            set_servo(0, servo0_position);
+            set_servo(1, servo1_position );
+            
+            // snprintf(buffer, sizeof(buffer), "0 %d", servo0_position);
+    
+            // // Display it on the LCD
+            // clear_screen();         // Clear previous content
+            // lcd_cursor(0, 0);        // Top-left of LCD
+            // print_string(buffer);
+            // snprintf(buffer, sizeof(buffer), "1 %d", servo1_position);
+            // lcd_cursor(0,1);        // Bottom-left of LCD
+            // print_string(buffer);
+            // lcd_cursor(0, 7);
+            // print_string("L");
+        } else {
+            // Move right
+            servo0_position = (light_0 - 220) * 30 / (240 - 220) + 127;
+            servo1_position = 127 - (light_1 * 30) / 255;
+            set_servo(0, servo0_position);
+            set_servo(1, servo1_position);
+            // snprintf(buffer, sizeof(buffer), "0 %d", servo0_position);
+    
+            // // Display it on the LCD
+            // clear_screen();         // Clear previous content
+            // lcd_cursor(0, 0);        // Top-left of LCD
+            // print_string(buffer);
+            // snprintf(buffer, sizeof(buffer), "1 %d", servo1_position);
+            // lcd_cursor(0,1);        // Bottom-left of LCD
+            // print_string(buffer);
+            // lcd_cursor(0, 7);
+            // print_string("R");
+        }
+    } else if (mode == 1) {
+        light_0 = analog(ANALOG0_PIN);
+        light_1 = analog(ANALOG1_PIN);
+        _delay_ms(300);          // Small delay so it's readable
+        clear_screen();         // Clear previous content
+            lcd_cursor(0, 0);
+            print_string("A Mode");
+        if(light_0 > light_1) {
+            // Move left
+            servo0_position = (light_0 - 220) * 30 / (240 - 220) + 127;
+            servo1_position = 127 - (light_1 - 220) * 30 / (240 - 220);
+            set_servo(0, servo0_position);
+            set_servo(1, servo1_position );
+            
+            // snprintf(buffer, sizeof(buffer), "0 %d", servo0_position);
+    
+            // // Display it on the LCD
+            // clear_screen();         // Clear previous content
+            // lcd_cursor(0, 0);        // Top-left of LCD
+            // print_string(buffer);
+            // snprintf(buffer, sizeof(buffer), "1 %d", servo1_position);
+            // lcd_cursor(0,1);        // Bottom-left of LCD
+            // print_string(buffer);
+            // lcd_cursor(0, 7);
+            // print_string("L");
+        } else {
+            // Move right
+            servo0_position = (light_0 - 220) * 30 / (240 - 220) + 127;
+            servo1_position = 127 - (light_1 * 30) / 255;
+            set_servo(0, servo0_position);
+            set_servo(1, servo1_position);
+            // snprintf(buffer, sizeof(buffer), "0 %d", servo0_position);
+    
+            // // Display it on the LCD
+            // clear_screen();         // Clear previous content
+            // lcd_cursor(0, 0);        // Top-left of LCD
+            // print_string(buffer);
+            // snprintf(buffer, sizeof(buffer), "1 %d", servo1_position);
+            // lcd_cursor(0,1);        // Bottom-left of LCD
+            // print_string(buffer);
+            // lcd_cursor(0, 7);
+            // print_string("R");
+            
+        }
     }
-
 }
 
-void main(){
-    /* 
-    TODO:
-        1. setup photo sensor
-            remap intputs from 0-255 -> 0-100
-        2. setup button press to change which sensor controls which motor
-            - switch statement for AGRESSION and FEAR
-        3. move motors according to photo sensor values
+void fear(void) {
+    char buffer[16];
+    int servo0_position, servo1_position;
+    u16 light_0, light_1;
+    u08 button_pressed = 0; // Initialize button_pressed to 0 (fear mode)
+    while(button_pressed == 0){
+        light_0 = analog(ANALOG0_PIN);
+        light_1 = analog(ANALOG1_PIN);
+        _delay_ms(300);          // Small delay so it's readable
+        
+        if(light_0 > light_1) {
+            // Move left
+            servo0_position = (light_0 - 220) * 30 / (240 - 220) + 127;
+            servo1_position = 127 - (light_1 - 220) * 30 / (240 - 220);
+            set_servo(0, servo0_position);
+            set_servo(1, servo1_position );
+            
+            snprintf(buffer, sizeof(buffer), "0 %d", servo0_position);
     
-    */
-
-    u08 sensor0Val;
-    u08 sensor1Val;
-
-    u08 robotType;
-
-
-    while(1){
-        // IMPLEMENT getSensor()
-        sensor0Val = getSensor(SENSOR0);
-        sensor1Val = getSensor(SENSOR1);
-
+            // Display it on the LCD
+            clear_screen();         // Clear previous content
+            lcd_cursor(0, 0);        // Top-left of LCD
+            print_string(buffer);
+            snprintf(buffer, sizeof(buffer), "1 %d", servo1_position);
+            lcd_cursor(0,1);        // Bottom-left of LCD
+            print_string(buffer);
+            lcd_cursor(0, 7);
+            print_string("L");
+        } else {
+            // Move right
+            servo0_position = (light_0 - 220) * 30 / (240 - 220) + 127;
+            servo1_position = 127 - (light_1 * 30) / 255;
+            set_servo(0, servo0_position);
+            set_servo(1, servo1_position);
+            snprintf(buffer, sizeof(buffer), "0 %d", servo0_position);
+    
+            // Display it on the LCD
+            clear_screen();         // Clear previous content
+            lcd_cursor(0, 0);        // Top-left of LCD
+            print_string(buffer);
+            snprintf(buffer, sizeof(buffer), "1 %d", servo1_position);
+            lcd_cursor(0,1);        // Bottom-left of LCD
+            print_string(buffer);
+            lcd_cursor(0, 7);
+            print_string("R");
+        }
     }
+    
+}
 
+void aggression(void) {
+    char buffer[16];
+    int servo0_position, servo1_position;
+    u16 light_0, light_1;
+    u08 button_pressed = 0; // Initialize button_pressed to 0 (fear mode)
+    while(button_pressed == 0){
+        light_0 = analog(ANALOG0_PIN);
+        light_1 = analog(ANALOG1_PIN);
+        _delay_ms(300);          // Small delay so it's readable
+        
+        if(light_0 < light_1) {
+            // Move left
+            servo0_position = (light_0 - 220) * 30 / (240 - 220) + 127;
+            servo1_position = 127 - (light_1 - 220) * 30 / (240 - 220);
+            set_servo(0, servo0_position);
+            set_servo(1, servo1_position );
+            
+            snprintf(buffer, sizeof(buffer), "0 %d", servo0_position);
+    
+            // Display it on the LCD
+            clear_screen();         // Clear previous content
+            lcd_cursor(0, 0);        // Top-left of LCD
+            print_string(buffer);
+            snprintf(buffer, sizeof(buffer), "1 %d", servo1_position);
+            lcd_cursor(0,1);        // Bottom-left of LCD
+            print_string(buffer);
+            lcd_cursor(0, 7);
+            print_string("L");
+        } else {
+            // Move right
+            servo0_position = (light_0 - 220) * 30 / (240 - 220) + 127;
+            servo1_position = 127 - (light_1 * 30) / 255;
+            set_servo(0, servo0_position);
+            set_servo(1, servo1_position);
+            snprintf(buffer, sizeof(buffer), "0 %d", servo0_position);
+    
+            // Display it on the LCD
+            clear_screen();         // Clear previous content
+            lcd_cursor(0, 0);        // Top-left of LCD
+            print_string(buffer);
+            snprintf(buffer, sizeof(buffer), "1 %d", servo1_position);
+            lcd_cursor(0,1);        // Bottom-left of LCD
+            print_string(buffer);
+            lcd_cursor(0, 7);
+            print_string("R");
+        }
+    }
+    
+}
+
+int main(void) {
+    init();        
+    init_adc();    
+    //fear();
+    //aggression();
+    while(1) {
+        braitenberg();
+    }
+    
+   
+    return 0;
 }
