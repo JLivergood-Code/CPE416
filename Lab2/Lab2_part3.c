@@ -44,10 +44,10 @@ void lineFollow(){
 
     float kP = (30/190);
     float kD = 1; 
-    float kI = 0;
+    // float kI = 0;
     
-    float pLeft, dLeft, iLeft;
-    float pRight, dRight, iRight;
+    float pLeft, dLeft; //, iLeft;
+    float pRight, dRight; //, iRight;
 
     lErrorOld = 0;
     rErrorOld = 0;
@@ -56,6 +56,9 @@ void lineFollow(){
         //======================================================================//
         // LEFT MOTOR
         lSensor = getLeft();
+        rSensor = getRight();
+
+
         // error is really large when lsesnor is 0 (on white), and small when lsensor reads 180 (on line)
         lError = (lSensor - rSensor) + CALIBRATION;
 
@@ -70,7 +73,6 @@ void lineFollow(){
         // ======================================================================//
         // RIGHT
 
-        rSensor = getRight();
         rError = (rSensor - lSensor) + CALIBRATION;
 
         pRight = kP * rError;
