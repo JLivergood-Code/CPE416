@@ -23,6 +23,8 @@
 #define CALIBRATION_L 130
 #define CALIBRATION_R 130
 
+#define TARGET 190
+
 #define LEFT_MOTOR 0
 #define RIGHT_MOTOR 1
 
@@ -42,7 +44,7 @@ void lineFollow(){
 
    	int lError, rError, lErrorOld, rErrorOld;
 
-    float kP = .1;
+    float kP = (1/8);
     float kD = 0.0001; 
     // float kI = 0;
     
@@ -63,7 +65,7 @@ void lineFollow(){
 
 
         // error is really large when lsesnor is 0 (on white), and small when lsensor reads 180 (on line)
-        lError = (lSensor - rSensor); // + CALIBRATION_L;
+        lError = TARGET - rSensor; // + CALIBRATION_L;
 
         
         pLeft = kP * lError;
@@ -76,7 +78,7 @@ void lineFollow(){
         // ======================================================================//
         // RIGHT
 
-        rError = (rSensor - lSensor); // + CALIBRATION_R;
+        rError = TARGET - lSensor; // + CALIBRATION_R;
 
         pRight = kP * rError;
         dRight = kD * (rError - rErrorOld);
