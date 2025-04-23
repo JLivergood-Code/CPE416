@@ -49,6 +49,9 @@ void lineFollow(){
     float pLeft, dLeft; //, iLeft;
     float pRight, dRight; //, iRight;
 
+    char bufferR[8];
+    char bufferL[8];
+
     lErrorOld = 0;
     rErrorOld = 0;
 
@@ -85,14 +88,25 @@ void lineFollow(){
         lServoPos = pLeft + dLeft;
         rServoPos = pRight + dRight;
 
-        set_servo(LEFT_MOTOR, lServoPos);
-        set_servo(RIGHT_MOTOR, rServoPos);
+        clear_screen();
+        snprintf(bufferL, 8, "%d:%d", lSensor, lError);
+        snprintf(bufferR, 8, "%d:%d", rSensor, rError);
+        lcd_cursor(0,0);
+        print_string(bufferL);
+        lcd_cursor(0,1);
+        print_string(bufferR);
+
+        set_servo(LEFT_MOTOR, 127);
+        set_servo(RIGHT_MOTOR, 127);
+
+        _delay_ms(50); 
     }
 }
 
 int main(){
     init();
     init_adc();
+    init_lcd();
 
     lineFollow();
 
