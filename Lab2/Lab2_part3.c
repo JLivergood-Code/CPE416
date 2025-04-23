@@ -65,10 +65,10 @@ void lineFollow(){
         rSensor = getRight();
 
         // + if facing right, - if facing left
-        error = lSensor - rSensor;
+        //error = lSensor - rSensor;
 
         // error is really large when lsesnor is 0 (on white), and small when lsensor reads 180 (on line)
-        lError = TARGET - rSensor; // + CALIBRATION_L;
+        lError = lSensor - rSensor; // + CALIBRATION_L;
 
         
         pLeft = kP * lError;
@@ -81,7 +81,7 @@ void lineFollow(){
         // ======================================================================//
         // RIGHT
 
-        rError = TARGET - lSensor; // + CALIBRATION_R;
+        rError = rSensor - lSensor; // + CALIBRATION_R;
 
         pRight = kP * rError;
         dRight = kD * (rError - rErrorOld);
@@ -104,7 +104,7 @@ void lineFollow(){
         set_servo(0, lServoPos);
         set_servo(1, rServoPos);
 
-        _delay_ms(100); 
+        _delay_ms(50); 
     }
 }
 
