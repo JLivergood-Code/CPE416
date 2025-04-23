@@ -43,8 +43,9 @@ void lineFollow(){
     u08 lSensor, rSensor;
 
    	int lError, rError, lErrorOld, rErrorOld;
+    int error;
 
-    float kP = (1/8);
+    float kP = 1/4;
     float kD = 0.0001; 
     // float kI = 0;
     
@@ -63,9 +64,11 @@ void lineFollow(){
         lSensor = getLeft();
         rSensor = getRight();
 
+        // + if facing right, - if facing left
+        error = lSensor - rSensor;
 
         // error is really large when lsesnor is 0 (on white), and small when lsensor reads 180 (on line)
-        lError = TARGET - rSensor; // + CALIBRATION_L;
+        lError = TARGET - lSensor; // + CALIBRATION_L;
 
         
         pLeft = kP * lError;
@@ -78,7 +81,7 @@ void lineFollow(){
         // ======================================================================//
         // RIGHT
 
-        rError = TARGET - lSensor; // + CALIBRATION_R;
+        rError = TARGET - rSensor; // + CALIBRATION_R;
 
         pRight = kP * rError;
         dRight = kD * (rError - rErrorOld);
