@@ -42,8 +42,8 @@ void lineFollow(){
 
     float lError, rError, lErrorOld, rErrorOld;
 
-    float kP = (30/190);
-    float kD = 1; 
+    float kP = 0.1;
+    float kD = 0.3; 
     // float kI = 0;
     
     float pLeft, dLeft; //, iLeft;
@@ -63,7 +63,7 @@ void lineFollow(){
 
 
         // error is really large when lsesnor is 0 (on white), and small when lsensor reads 180 (on line)
-        lError = (lSensor - rSensor) * CALIBRATION;
+        lError = (lSensor - rSensor) + CALIBRATION;
 
         
         pLeft = kP * lError;
@@ -76,7 +76,7 @@ void lineFollow(){
         // ======================================================================//
         // RIGHT
 
-        rError = (rSensor - lSensor) * CALIBRATION;
+        rError = (rSensor - lSensor) + CALIBRATION;
 
         pRight = kP * rError;
         dRight = kD * (rError - rErrorOld);
@@ -89,8 +89,8 @@ void lineFollow(){
         rServoPos = pRight + dRight;
 
         clear_screen();
-        snprintf(bufferL, 8, "%d", lError);
-        snprintf(bufferR, 8, "%d", rError);
+        snprintf(bufferL, 8, "%d", lServoPos);
+        snprintf(bufferR, 8, "%d", rServoPos);
         lcd_cursor(0,0);
         print_string(bufferL);
         lcd_cursor(0,1);
