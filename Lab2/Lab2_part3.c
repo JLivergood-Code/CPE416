@@ -20,18 +20,18 @@
 */
 
 // CHANGE DEPENDING ON MAT
-#define CALIBRATION 100
-
+#define CALIBRATION_L 103
+#define CALIBRATION_R 137
 
 #define LEFT_MOTOR 0
 #define RIGHT_MOTOR 1
 
 u08 getLeft(){
-    return analog(ANALOG1_PIN);
+    return analog(ANALOG0_PIN);
 }
 
 u08 getRight(){
-    return analog(ANALOG0_PIN);
+    return analog(ANALOG1_PIN);
 }
 
 void lineFollow(){
@@ -40,10 +40,10 @@ void lineFollow(){
 
     u08 lSensor, rSensor;
 
-    float lError, rError, lErrorOld, rErrorOld;
+   	int lError, rError, lErrorOld, rErrorOld;
 
-    float kP = 0.1;
-    float kD = 0.3; 
+    float kP = 1;
+    float kD = 0.2; 
     // float kI = 0;
     
     float pLeft, dLeft; //, iLeft;
@@ -63,7 +63,7 @@ void lineFollow(){
 
 
         // error is really large when lsesnor is 0 (on white), and small when lsensor reads 180 (on line)
-        lError = (lSensor - rSensor) + CALIBRATION;
+        lError = (lSensor - rSensor) + CALIBRATION_L;
 
         
         pLeft = kP * lError;
@@ -76,7 +76,7 @@ void lineFollow(){
         // ======================================================================//
         // RIGHT
 
-        rError = (rSensor - lSensor) + CALIBRATION;
+        rError = (rSensor - lSensor) + CALIBRATION_R;
 
         pRight = kP * rError;
         dRight = kD * (rError - rErrorOld);
@@ -89,8 +89,8 @@ void lineFollow(){
         rServoPos = pRight + dRight;
 
         clear_screen();
-        snprintf(bufferL, 8, "%d", lServoPos);
-        snprintf(bufferR, 8, "%d", rServoPos);
+        snprintf(bufferL, 8, "%d", lError);
+        snprintf(bufferR, 8, "%d", rError);
         lcd_cursor(0,0);
         print_string(bufferL);
         lcd_cursor(0,1);
