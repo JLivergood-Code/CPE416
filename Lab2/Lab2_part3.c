@@ -20,15 +20,17 @@
 */
 
 // CHANGE DEPENDING ON MAT
-#define CALIBRATION 100
+#define CALIBRATION 19
+
+
 #define LEFT_MOTOR 0
 #define RIGHT_MOTOR 1
 
-u16 getLeft(){
+u08 getLeft(){
     return analog(ANALOG1_PIN);
 }
 
-u16 getRight(){
+u08 getRight(){
     return analog(ANALOG0_PIN);
 }
 
@@ -36,11 +38,11 @@ void lineFollow(){
     u08 lServoPos;
     u08 rServoPos;
 
-    u16 lSensor, rSensor;
+    u08 lSensor, rSensor;
 
     float lError, rError, lErrorOld, rErrorOld;
 
-    float kP = (100/255);
+    float kP = (30/190);
     float kD = 1; 
     float kI = 0;
     
@@ -54,21 +56,35 @@ void lineFollow(){
         //======================================================================//
         // LEFT MOTOR
         lSensor = getLeft();
-        lError -= CALIBRATION;
+        // error is really large when lsesnor is 0 (on white), and small when lsensor reads 180 (on line)
+        lError = (lSensor - rSensor) + CALIBRATION;
+
         
         pLeft = kP * lError;
         dLeft = kD * (lError - lErrorOld);
         lErrorOld = lError;
 
-        lServoPos = pLeft + dleft;
-        set_servo(LEFT_MOTOR, lServoPos);
+        
         
 
         // ======================================================================//
         // RIGHT
 
         rSensor = getRight();
-        rError -= Calibration;
+        rError = (rSensor - lSensor) + CALIBRATION;
+
+        pRight = kP * rError;
+        dRight = kD * (rError - rErrorOld);
+        rErrorOld = rError;
+
+
+        // IF BOTH detect white, turn one otor faster than the others
+
+        lServoPos = pLeft + dLeft;
+        rServoPos = pRight + dRight;
+
+        set_servo(LEFT_MOTOR, lServoPos);
+        set_servo(RIGHT_MOTOR, rServoPos);
     }
 }
 
@@ -76,9 +92,7 @@ int main(){
     init();
     init_adc();
 
-    while(1){
-        lineFollow();
-    }
+    lineFollow();
 
     return 0;
 }
