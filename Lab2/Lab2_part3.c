@@ -21,7 +21,7 @@
 
 // CHANGE DEPENDING ON MAT
 #define CALIBRATION_L 130
-#define CALIBRATION_R 135
+#define CALIBRATION_R 138
 
 #define TARGET 190
 
@@ -43,14 +43,14 @@ void lineFollow(){
     u08 lSensor, rSensor;
 
    	int lError, rError, lErrorOld, rErrorOld;
-    int error;
+    int sum = 0;
 
-    float kP = 0.1;
-    float kD = 0.02; 
-    // float kI = 0;
+    float kP = 0.08;
+    float kD = 0.002; 
+    float kI = 0.02;
     
-    float pLeft, dLeft; //, iLeft;
-    float pRight, dRight; //, iRight;
+    float pLeft, dLeft, iLeft;
+    float pRight, dRight, iRight;
 
     char bufferR[8];
     char bufferL[8];
@@ -70,9 +70,15 @@ void lineFollow(){
         // error is really large when lsesnor is 0 (on white), and small when lsensor reads 180 (on line)
        
 			 	lError = lSensor - rSensor; // + CALIBRATION_L;
-        
+        sum += lError;
+
+				if(sum >= 500) { sum = 500; }
+				if(sum <= -500) { sum = -500; }
+
+
         pLeft = kP * lError;
         dLeft = kD * (lError - lErrorOld);
+				iLeft = kI * sum;
         lErrorOld = lError;
 
         
@@ -85,12 +91,13 @@ void lineFollow(){
 
         pRight = kP * rError;
         dRight = kD * (rError - rErrorOld);
+				iRight = kI * sum;
         rErrorOld = rError;
 
 
         // IF BOTH detect white, turn one otor faster than the others
 
-        lServoPos = pLeft + dLeft + CALIBRATION_L;
+        lServoPos = pLeft + dLeft +  CALIBRATION_L;
         rServoPos = pRight + dRight + CALIBRATION_R;
 
         clear_screen();
