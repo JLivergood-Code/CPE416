@@ -20,7 +20,7 @@
 */
 
 // CHANGE DEPENDING ON MAT
-#define CALIBRATION 19
+#define CALIBRATION 100
 
 
 #define LEFT_MOTOR 0
@@ -63,7 +63,7 @@ void lineFollow(){
 
 
         // error is really large when lsesnor is 0 (on white), and small when lsensor reads 180 (on line)
-        lError = (lSensor - rSensor) + CALIBRATION;
+        lError = (lSensor - rSensor) * CALIBRATION;
 
         
         pLeft = kP * lError;
@@ -76,7 +76,7 @@ void lineFollow(){
         // ======================================================================//
         // RIGHT
 
-        rError = (rSensor - lSensor) + CALIBRATION;
+        rError = (rSensor - lSensor) * CALIBRATION;
 
         pRight = kP * rError;
         dRight = kD * (rError - rErrorOld);
@@ -89,8 +89,8 @@ void lineFollow(){
         rServoPos = pRight + dRight;
 
         clear_screen();
-        snprintf(bufferL, 8, "%d:%d", lSensor, lError);
-        snprintf(bufferR, 8, "%d:%d", rSensor, rError);
+        snprintf(bufferL, 8, "%d", lError);
+        snprintf(bufferR, 8, "%d", rError);
         lcd_cursor(0,0);
         print_string(bufferL);
         lcd_cursor(0,1);
