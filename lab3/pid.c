@@ -1,19 +1,16 @@
-#include "globals.h"
-#include <util/delay.h>
-#include <avr/io.h>
-#include <avr/interrupt.h>
-#include <stdio.h>
+#include "pid.h"
 
 #define CALIBRATION_L 20
 #define CALIBRATION_R 20
 
-struct motor_command{
 
-    uint8_t l_speed;
-    uint8_t r_speed;
+u08 getLeft(){
+    return analog(ANALOG0_PIN);
 }
 
-struct motor_command compute_proportional(uint8_t left, uint8_t right);
+u08 getRight(){
+    return analog(ANALOG1_PIN);
+}
 
 void motor(uint8_t num, int8_t speed) {
     if (num == 1) {
@@ -41,7 +38,7 @@ struct motor_command compute_proportional(uint8_t left, uint8_t right){
     float pLeft, dLeft; //, iLeft;
     float pRight, dRight; //, iRight;
 
-    lError = lSensor - rSensor; 
+    lError = left - right; 
         
     pLeft = kP * lError;
     dLeft = kD * (lError - lErrorOld);
@@ -51,7 +48,7 @@ struct motor_command compute_proportional(uint8_t left, uint8_t right){
     // RIGHT
     // THIS all technically is just a copy of the left motor
 
-    rError = lSensor - rSensor; 
+    rError = left - right; 
 
     pRight = kP * rError;
     dRight = kD * (rError - rErrorOld);
@@ -64,14 +61,16 @@ struct motor_command compute_proportional(uint8_t left, uint8_t right){
 }
 
 void display_motor(struct motor_command in_motor){
+    char bufferR[8];
+    char bufferL[8];
+    
     clear_screen();
-        snprintf(bufferL, 8, "L:%d", in_motor.l_speed);
-        snprintf(bufferR, 8, "R:%d", in_motor.r_speed);
-        lcd_cursor(0,0);
-        print_string(bufferL);
-        lcd_cursor(0,1);
-        print_string(bufferR);
-
+    snprintf(bufferL, 8, "L:%d", in_motor.l_speed);
+    snprintf(bufferR, 8, "R:%d", in_motor.r_speed);
+    lcd_cursor(0,0);
+    print_string(bufferL);
+    lcd_cursor(0,1);
+    print_string(bufferR);
 
 }
 
