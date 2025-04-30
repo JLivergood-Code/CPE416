@@ -6,10 +6,9 @@
 #include <stdlib.h>
 #include "pid.h"
 
-
 #define MAX_NODES 3
 #define OUT_NODES 2
-#define HIDDEN_NODES 3
+#define HIDDEN_NODES 4
 #define NUM_INPUTS 2
 
 typedef struct {
