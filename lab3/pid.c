@@ -28,21 +28,21 @@ void motor(uint8_t num, int8_t speed) {
 
 struct motor_command compute_proportional(uint8_t left, uint8_t right){
     struct motor_command motor_val;
-    int lError, rError, lErrorOld, rErrorOld;
-    int error;
+    int lError, rError; // , lErrorOld, rErrorOld;
+    //int error;
 
     float kP = 0.1;
-    float kD = 0.02; 
+    //float kD = 0.02; 
     // float kI = 0;
     
-    float pLeft, dLeft; //, iLeft;
-    float pRight, dRight; //, iRight;
+    float pLeft; // dLeft; //, iLeft;
+    float pRight; // dRight; //, iRight;
 
     lError = left - right; 
         
     pLeft = kP * lError;
-    dLeft = kD * (lError - lErrorOld);
-    lErrorOld = lError;
+    //dLeft = kD * (lError - lErrorOld);
+    //lErrorOld = lError;
 
     // ======================================================================//
     // RIGHT
@@ -51,11 +51,11 @@ struct motor_command compute_proportional(uint8_t left, uint8_t right){
     rError = left - right; 
 
     pRight = kP * rError;
-    dRight = kD * (rError - rErrorOld);
-    rErrorOld = rError;
+    //dRight = kD * (rError - rErrorOld);
+    // rErrorOld = rError;
 
-    motor_val.l_speed = pLeft + dLeft + CALIBRATION_L;
-    motor_val.r_speed = pRight + dRight + CALIBRATION_R;
+    motor_val.l_speed = pLeft + CALIBRATION_L;
+    motor_val.r_speed = pRight + CALIBRATION_R;
 
     return motor_val;
 }
