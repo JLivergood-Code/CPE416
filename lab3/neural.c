@@ -91,8 +91,6 @@ void controller(){
     }
 }
 
-
-
 void initialize_network(Node *outNodes, Node *hiddenNodes){
 
     u08 nodeI;
