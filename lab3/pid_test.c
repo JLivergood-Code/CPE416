@@ -8,16 +8,25 @@ int main(){
     struct motor_command motor_val;
     u08 lSensor;
     u08 rSensor;
+    u08 lSensor_old = 0;
+    u08 rSensor_old = 0;
+    u08 lPosition;
+    u08 rPosition;
 
     while(1){
 
         lSensor = getLeft();
         rSensor = getRight();
 
-        motor_val = compute_proportional(lSensor, rSensor);
+        motor_val = compute_proportional(lSensor, rSensor, lSensor_old, rSensor_old);
+        lSensor_old = lSensor;
+        rSensor_old = rSensor;
 
-        set_motor(0, motor_val.l_speed);
-        set_motor(1, motor_val.r_speed);
+        lPosition = motor(0, motor_val.l_speed);
+        rPosition = motor(1, motor_val.r_speed);
+        display_motor(motor_val, lSensor, rSensor);
+
+        _delay_ms(10); 
 
     }
 

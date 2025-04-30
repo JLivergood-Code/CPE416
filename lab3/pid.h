@@ -16,8 +16,8 @@ struct motor_command{
 u08 getLeft();
 u08 getRight();
 
-struct motor_command compute_proportional(uint8_t left, uint8_t right);
-void motor(uint8_t num, int8_t speed);
-void display_motor(struct motor_command in_motor);
+struct motor_command compute_proportional(uint8_t left, uint8_t right, u08 left_old, u08 right_old);
+int motor(uint8_t num, int8_t speed);
+void display_motor(struct motor_command in_motor, u08 lPos, u08 rPos);
 
 #endif

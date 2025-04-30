@@ -115,7 +115,7 @@ int main(){
     init_adc();
     init_lcd();
 
-    neural_network();
+    neural_network(10);
 
     return 0;
 }

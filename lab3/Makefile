@@ -13,8 +13,13 @@ neural: neural.c $(wildcard $(BOARD_LIB)/*.c)
 	avr-objcopy -O ihex main.elf main.hex
 	avr-size main.elf
 
-pid_test: pid_test.c pid.c $(wildcard $(BOARD_LIB)/*.c)
+test: pid_test.c pid.c $(wildcard $(BOARD_LIB)/*.c)
 	avr-gcc -I$(BOARD_LIB) -DF_CPU=$(CLOCK_RATE) -Wall -mmcu=atmega645a -O2 -o main.elf pid_test.c pid.c $(wildcard $(BOARD_LIB)/*.c)
+	avr-objcopy -O ihex main.elf main.hex
+	avr-size main.elf
+
+off: motorOff.c $(wildcard $(BOARD_LIB)/*.c)
+	avr-gcc -I$(BOARD_LIB) -DF_CPU=$(CLOCK_RATE) -Wall -mmcu=atmega645a -O2 -o main.elf motorOff.c $(wildcard $(BOARD_LIB)/*.c)
 	avr-objcopy -O ihex main.elf main.hex
 	avr-size main.elf
 
