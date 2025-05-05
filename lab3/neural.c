@@ -11,8 +11,8 @@
 #define HIDDEN_NODES 3
 #define NUM_INPUTS 2
 
-#define MAX_SAMPLES 5000
-int sensor_readings[MAX_SAMPLES][2]; // left and right values
+#define MAX_SAMPLES 1000
+u08 sensor_readings[MAX_SAMPLES][2]; // left and right values
 int sample_count = 0;
 
 typedef struct {
@@ -26,15 +26,16 @@ typedef struct {
 Node hidden_nodes[HIDDEN_NODES];
 Node output_nodes[OUT_NODES];
 struct motor_command compute_proportional(uint8_t left, uint8_t right, uint8_t left_old, uint8_t right_old);
+struct motor_command compute_neural_network(uint8_t left, uint8_t right);
+void train_neural_network(uint8_t numEpochs);
+void initialize_network(Node *outNodes, Node *hiddenNodes);
+void set_motors(u08 l_speed, u08 r_speed);
 
-
-u08 getLeft(){
-    return analog(ANALOG0_PIN);
+void set_motors(u08 l_speed, u08 r_speed){
+    motor(0, l_speed);
+    motor(1, r_speed);
 }
 
-u08 getRight(){
-    return analog(ANALOG1_PIN);
-}
 
 void controller(){
     //start in proportional
@@ -56,8 +57,8 @@ void controller(){
             print_string("Data Cap");
             sample_count = 0;
 
-            uint8_t left_old = getLeft();
-            uint8_t right_old = getRight();
+            // uint8_t left_old = getLeft();
+            // uint8_t right_old = getRight();
             _delay_ms(10);  // slight delay before next sample
 
             while (get_btn() != 1) {
@@ -67,12 +68,12 @@ void controller(){
 
                     sensor_readings[sample_count][0] = left;
                     sensor_readings[sample_count][1] = right;
-                    sensor_readings[sample_count][2] = left_old;
-                    sensor_readings[sample_count][3] = right_old;
+                    //sensor_readings[sample_count][2] = left_old;
+                    //sensor_readings[sample_count][3] = right_old;
 
                     // Update previous values
-                    left_old = left;
-                    right_old = right;
+                    // left_old = left;
+                    // right_old = right;
 
                     sample_count++;
                 }
@@ -87,7 +88,22 @@ void controller(){
              // or get this from accelerometer
             mode = 3;
             //get num epochs with accelerometer
-            num_epochs;
+            num_epochs = 0;
+            uint8_t x;
+
+            while(get_btn() != 1){
+                x = get_accel_x();
+
+                if ((x <= 254 && x >= 250) || (x <= 5)){
+                    //Flat
+                } else if (x < 252 && x > 185) {
+                    if (num_epochs >= 10) num_epochs -= 10; //Tilted towards 
+                } else if (x <= 60) {
+                    num_epochs += 10; //Tilted away
+                }
+                _delay_ms(500);
+            }
+
 
             train_neural_network(num_epochs);//call training function with sensor_readings as argument
         }
@@ -99,7 +115,7 @@ void controller(){
                 uint8_t left = getLeft();
                 uint8_t right = getRight();
                 struct motor_command cmd = compute_neural_network(left, right);
-                set_motors(cmd.left_motor, cmd.right_motor);
+                set_motors(cmd.l_speed, cmd.r_speed);
                 _delay_ms(30);
             }
             mode = 2; // go back to training mode
@@ -189,8 +205,8 @@ struct motor_command compute_neural_network(uint8_t left, uint8_t right) {
     }
 
     // Scale to motor speed range (e.g. 0-255)
-    result.left_motor = (uint8_t)(output_nodes[0].output * 255);
-    result.right_motor = (uint8_t)(output_nodes[1].output * 255);
+    result.l_speed = (uint8_t)(output_nodes[0].output * 255);
+    result.r_speed = (uint8_t)(output_nodes[1].output * 255);
 
     return result;
 }
@@ -235,6 +251,7 @@ struct motor_command compute_neural_network(uint8_t left, uint8_t right) {
 // }
 void train_neural_network(uint8_t numEpochs) {
     float alpha = 0.1;
+    const float alpha_change = (0.1-0.01) / numEpochs;
 
     initialize_network(output_nodes, hidden_nodes);
 
@@ -247,9 +264,16 @@ void train_neural_network(uint8_t numEpochs) {
             inputs[1] = sensor_readings[i][1] / 255.0;
 
             float target_left, target_right;
-            struct motor_command expected = compute_proportional(sensor_readings[i][0], sensor_readings[i][1], sensor_readings[i][2], sensor_readings[i][3]);
-            target_left = expected.left_motor / 255.0;
-            target_right = expected.right_motor / 255.0;
+            struct motor_command expected;
+            if(i > 0){
+                expected = compute_proportional(sensor_readings[i][0], sensor_readings[i][1], sensor_readings[i-1][0], sensor_readings[i-1][1]);
+
+            } else {
+                expected = compute_proportional(sensor_readings[i][0], sensor_readings[i][1], sensor_readings[0][0], sensor_readings[0][1]);
+
+            }
+            target_left = expected.l_speed / 255.0;
+            target_right = expected.r_speed / 255.0;
 
             // ---- Forward pass ----
             float hidden_outputs[HIDDEN_NODES];
@@ -309,6 +333,7 @@ void train_neural_network(uint8_t numEpochs) {
                 hidden_nodes[h].bias -= alpha * hidden_deltas[h];
             }
         }
+        alpha -= alpha_change;
     }
 }
 
