@@ -41,10 +41,26 @@ void controller(){
     //start in proportional
     int mode = 0; //0 for prop control, 1 for data cap mode, 2 for training, 3 for run neural network
     uint16_t num_epochs;
+    
+    u08 left;
+    u08 right;
+    u08 left_old = 0;
+    u08 right_old = 0;
+
     while (mode == 0){
         //proportional control
         lcd_cursor(0,0);
         print_string("proport");
+
+        left = getLeft();
+        right = getRight();
+
+        struct motor_command expected = compute_proportional(left, right, left_old, right_old);
+        set_motors(expected.l_speed, expected.r_speed);
+
+        left_old = left;
+        right_old = right;
+
         if (get_btn() == 1 && mode == 0) {
             mode = 1; // Switch to data capture
         }
@@ -101,6 +117,12 @@ void controller(){
                 } else if (x <= 60) {
                     num_epochs += 10; //Tilted away
                 }
+                clear_screen();
+                lcd_cursor(0, 0);
+                print_string("Training");
+                lcd_cursor(0, 1);
+                print_num(num_epochs);
+                
                 _delay_ms(500);
             }
 
