@@ -170,6 +170,7 @@ void controller(){
                 uint8_t left = getLeft();
                 uint8_t right = getRight();
                 struct motor_command cmd = compute_neural_network(left, right);
+                display_motor(cmd, left, right);
                 set_motors(cmd.l_speed, cmd.r_speed);
                 _delay_ms(30);
             }
@@ -190,15 +191,20 @@ void initialize_network(Node *outNodes, Node *hiddenNodes){
 
     for(nodeI = 0; nodeI < NUM_INPUTS; nodeI++){
         for(weightI = 0; weightI < NUM_INPUTS; weightI++){
-            hiddenNodes[nodeI].weights[weightI] = rand() / RAND_MAX;
+            hiddenNodes[nodeI].weights[weightI] = ((float) rand()) / ((float) RAND_MAX);
         }
+        hiddenNodes[nodeI].bias = ((float) rand()) / ((float) RAND_MAX);
     }
     
     for(nodeI = 0; nodeI < OUT_NODES; nodeI++){
         for(weightI = 0; weightI < HIDDEN_NODES; weightI++){
-            outNodes[nodeI].weights[weightI] = rand() / RAND_MAX;
+            outNodes[nodeI].weights[weightI] = ((float) rand()) / ((float) RAND_MAX);
         }
+        outNodes[nodeI].bias = ((float) rand()) / ((float) RAND_MAX);
+
     }
+
+    
 }
 
 
@@ -234,6 +240,7 @@ struct motor_command compute_neural_network(uint8_t left, uint8_t right) {
     result.l_speed = (uint8_t)(output_nodes[0].output * 255);
     result.r_speed = (uint8_t)(output_nodes[1].output * 255);
 
+
     return result;
 }
 
@@ -249,20 +256,26 @@ float calculate_out_value(float target, float out, float input){
     return dout * dnet * dweight;
 }
 
-float calculate_hidden_value(float target, float out, float input, Node *output_nodes, u08 weightI){
-    float dout;
+float calculate_hidden_value(float *targets, float out, float input, Node *output_nodes, u08 weightI){
+    float dout = 0;
     float doutput_tot; // references values calculated for output nodes
     float doutput_net; // references values calculated for output nodes
     float dnet;
     float dweight;
+    float target;
 
     u08 outI;
     
     for(outI = 0; outI < OUT_NODES; outI++){
+        target = (outI == 0) ? targets[0] : targets[1];
         doutput_net = output_nodes[outI].output * (1 - output_nodes[outI].output);
         doutput_tot = output_nodes[outI].output - target;
 
-        dout += doutput_net * doutput_tot * output_nodes[outI].weights[weightI];
+        if(weightI < HIDDEN_NODES){
+            dout += doutput_net * doutput_tot * output_nodes[outI].weights[weightI];
+        } else {
+            dout += doutput_net * doutput_tot * output_nodes[outI].bias;
+        }
     }
     
     dnet = out * (1 - out);
@@ -271,50 +284,10 @@ float calculate_hidden_value(float target, float out, float input, Node *output_
     return dout * dnet * dweight;
 }
 
-// struct motor_command caclulate_motors(Node *outNodes, Node *hiddenNodes){//compute neural network
-    
-// }
-
-// void neural_network(u08 numEpochs){//train neural network
-//     /*
-//         data structure:
-//         - list of out nodes
-//         - list of in nodes
-//         - each list has a node 
-//     */
-//     Node outNodes[OUT_NODES];
-//     Node hiddenNodes[HIDDEN_NODES];
-
-//     Node outNew[OUT_NODES];
-//     Node hiddenNew[HIDDEN_NODES];
-
-//     struct motor_command motor_vals;
-//     u08 trainingI = 0;
-//     u08 nodeI;
-
-//     float alpha = 0.3;
-
-//     // STEP 1: Initialize Neural Network
-
-//     initialize_network(outNodes, hiddenNodes);
-
-//     // STEP 2: Train
-//     for(trainingI = 0; trainingI < numEpochs; trainingI++){
-//         // STEP 3: isolate each parameter, starting with output nodes
-//         // This includes all weights and all biases
-//         for(nodeI = 0; nodeI < OUT_NODES; nodeI++){
-//             // iterate through each value in output node weights[]
-//         }
-//         // STEP 4, repeat for hidden Nodes
-//         for(nodeI = 0; nodeI < HIDDEN_NODES; nodeI++){
-//             // need connecting output node "output" value
-//         }
-//     }
-
 // }
 void train_neural_network(uint8_t numEpochs) {
-    float alpha = 0.5;
-    const float alpha_change = (0.1-0.01) / numEpochs;
+    float alpha = 0.3;
+    const float alpha_change = (0.3-0.01) / numEpochs;
     float target;
     u08 nodeI;
     u08 h;
@@ -326,6 +299,7 @@ void train_neural_network(uint8_t numEpochs) {
         for (int i = 0; i < sample_count; i++) {
             // Normalize inputs
             float inputs[NUM_INPUTS];
+            float targets[OUT_NODES];
             inputs[0] = sensor_readings[i][0] / 255.0;
             inputs[1] = sensor_readings[i][1] / 255.0;
 
@@ -338,8 +312,47 @@ void train_neural_network(uint8_t numEpochs) {
                 expected = compute_proportional(sensor_readings[i][0], sensor_readings[i][1], sensor_readings[0][0], sensor_readings[0][1]);
 
             }
+
+            // _delay_ms(10);
+
             target_left = expected.l_speed / 255.0;
             target_right = expected.r_speed / 255.0;
+            targets[0] = target_left;
+            targets[1] = target_right;
+
+            // update output values
+            // Update output values for hidden layer
+            for (int i = 0; i < HIDDEN_NODES; i++) {
+                float sum = 0;
+                for (int j = 0; j < NUM_INPUTS; j++) {
+                    sum += inputs[j] * hidden_nodes[i].weights[j];
+                }
+                sum += hidden_nodes[i].bias;
+                hidden_nodes[i].output = 1.0 / (1.0 + exp(-sum));
+            }
+
+            // update output values for output layer
+            for (int i = 0; i < OUT_NODES; i++) {
+                float sum = 0;
+                for (int j = 0; j < HIDDEN_NODES; j++) {
+                    sum += hidden_nodes[j].output * output_nodes[i].weights[j];
+                }
+                sum += output_nodes[i].bias;
+                output_nodes[i].output = 1.0 / (1.0 + exp(-sum));
+            }
+
+            // ensure error is going down
+            float error = 0.5 * (
+                pow((target_left - output_nodes[0].output), 2) +
+                pow((target_right - output_nodes[1].output), 2)
+            );
+            // char bufferE[8];
+            // snprintf(bufferE, 8, "%8.2f", error);
+            // print_string(bufferE);
+            lcd_cursor(0,1);
+            print_num(error*100000);
+
+
 
             // back propogation first
             for(nodeI = 0; nodeI < OUT_NODES; nodeI++){
@@ -348,20 +361,21 @@ void train_neural_network(uint8_t numEpochs) {
 
                 //for each hidden node, there is a related input and weight
                 for(h = 0; h < HIDDEN_NODES; h++){
-                    output_new[nodeI].weights[h] = calculate_out_value(target, output_nodes[nodeI].output, output_nodes[nodeI].inputs[h]);
+                    output_new[nodeI].weights[h] = calculate_out_value(target, output_nodes[nodeI].output, hidden_nodes[h].output);
                 }
                 // calculate bias 
                 output_new[nodeI].bias = calculate_out_value(target, output_nodes[nodeI].output, 1);
             }
 
+            // hidden node layer
             for(nodeI = 0; nodeI < HIDDEN_NODES; nodeI++){
                 // h1 takes in input from input 1
                 for(h = 0; h < NUM_INPUTS; h++){
-                    hidden_new[nodeI].weights[h] = calculate_hidden_value(target, hidden_nodes[nodeI].output, inputs[h], output_nodes, nodeI);
+                    hidden_new[nodeI].weights[h] = calculate_hidden_value(targets, hidden_nodes[nodeI].output, inputs[h], output_nodes, nodeI);
                 }
 
                 // calculates new bias
-                hidden_new[nodeI].weights[h] = calculate_hidden_value(target, hidden_nodes[nodeI].output, 1, output_nodes, nodeI);
+                hidden_new[nodeI].bias = calculate_hidden_value(targets, hidden_nodes[nodeI].output, 1, output_nodes, nodeI);
 
             }
 
@@ -376,70 +390,15 @@ void train_neural_network(uint8_t numEpochs) {
 
             for (int h = 0; h < HIDDEN_NODES; h++) {
                 for (int j = 0; j < NUM_INPUTS; j++) {
-                    hidden_nodes[h].weights[j] -= alpha * hidden_new[h].weights[j] * inputs[j];
+                    hidden_nodes[h].weights[j] -= alpha * hidden_new[h].weights[j];
                 }
                 hidden_nodes[h].bias -= alpha * hidden_new[h].bias;
             }
 
-            // ---- Forward pass ----
-        //     float hidden_outputs[HIDDEN_NODES];
-        //     for (int h = 0; h < HIDDEN_NODES; h++) {
-        //         float sum = 0;
-        //         for (int j = 0; j < NUM_INPUTS; j++) {
-        //             sum += inputs[j] * hidden_nodes[h].weights[j];
-        //         }
-        //         sum += hidden_nodes[h].bias;
-        //         hidden_nodes[h].output = 1.0 / (1.0 + exp(-sum));
-        //         hidden_outputs[h] = hidden_nodes[h].output;
-        //     }
+            
 
-        //     float output_outputs[OUT_NODES];
-        //     for (int o = 0; o < OUT_NODES; o++) {
-        //         float sum = 0;
-        //         for (int h = 0; h < HIDDEN_NODES; h++) {
-        //             sum += hidden_nodes[h].output * output_nodes[o].weights[h];
-        //         }
-        //         sum += output_nodes[o].bias;
-        //         output_nodes[o].output = 1.0 / (1.0 + exp(-sum));
-        //         output_outputs[o] = output_nodes[o].output;
-        //     }
-
-        //     // ---- Backward pass ----
-        //     float output_deltas[OUT_NODES];
-        //     float hidden_deltas[HIDDEN_NODES];
-
-        //     // Output deltas
-        //     for (int o = 0; o < OUT_NODES; o++) {
-        //         float target = (o == 0) ? target_left : target_right;
-        //         float error = output_nodes[o].output - target;
-        //         output_deltas[o] = error * output_nodes[o].output * (1 - output_nodes[o].output);
-        //     }
-
-        //     // Hidden deltas
-        //     for (int h = 0; h < HIDDEN_NODES; h++) {
-        //         float error = 0;
-        //         for (int o = 0; o < OUT_NODES; o++) {
-        //             error += output_deltas[o] * output_nodes[o].weights[h];
-        //         }
-        //         hidden_deltas[h] = error * hidden_nodes[h].output * (1 - hidden_nodes[h].output);
-        //     }
-
-        //     // Update weights and biases
-        //     for (int o = 0; o < OUT_NODES; o++) {
-        //         for (int h = 0; h < HIDDEN_NODES; h++) {
-        //             output_nodes[o].weights[h] -= alpha * output_deltas[o] * hidden_outputs[h];
-        //         }
-        //         output_nodes[o].bias -= alpha * output_deltas[o];
-        //     }
-
-        //     for (int h = 0; h < HIDDEN_NODES; h++) {
-        //         for (int j = 0; j < NUM_INPUTS; j++) {
-        //             hidden_nodes[h].weights[j] -= alpha * hidden_deltas[h] * inputs[j];
-        //         }
-        //         hidden_nodes[h].bias -= alpha * hidden_deltas[h];
-        //     }
         }
-        // alpha -= alpha_change;
+        alpha -= alpha_change;
     }
 }
 
