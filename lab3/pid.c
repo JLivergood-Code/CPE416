@@ -1,3 +1,9 @@
+/*
+Names: Joshua Livergood and Danny Moreno
+Lab3, part 1 
+PID controller for expected values
+*/
+
 #include "pid.h"
 
 #define CALIBRATION_L 15

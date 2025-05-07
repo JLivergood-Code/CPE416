@@ -1,3 +1,9 @@
+/*
+Names: Joshua Livergood and Danny Moreno
+Lab3 
+Back Propogation Neural Network for part 2 
+*/
+
 #include "globals.h"
 #include <util/delay.h>
 #include <avr/io.h>
@@ -270,6 +276,7 @@ float calculate_hidden_value(float *targets, float out, float input, Node *outpu
 
     u08 outI;
     
+    // caluclates error for output nodes
     for(outI = 0; outI < OUT_NODES; outI++){
         doutput_net = output_nodes[outI].output * (1 - output_nodes[outI].output);
         doutput_e = output_nodes[outI].output - targets[outI];
@@ -301,6 +308,7 @@ void train_neural_network(uint8_t numEpochs) {
 
             float target_left, target_right;
             struct motor_command expected;
+            // PID expected values
             if(i > 0){
                 expected = compute_proportional(sensor_readings[i][0], sensor_readings[i][1], sensor_readings[i-1][0], sensor_readings[i-1][1]);
 

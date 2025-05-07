@@ -1,3 +1,9 @@
+/*
+Names: Joshua Livergood and Danny Moreno
+Lab3, part 2 
+Script used to test and output neural network values
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>

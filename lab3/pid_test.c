@@ -1,3 +1,9 @@
+/*
+Names: Joshua Livergood and Danny Moreno
+Lab3, part 1 
+Script used to test PID controller is scalled from 0-100
+*/
+
 #include "pid.h"
 
 int main(){

@@ -1,0 +1,5 @@
+Joshua Livergood/ Danny Moreno
+
+lab 3: Neural Networks
+
+neural_j works is the file that works. neural_test can be ran to view outputs and weights of neural_network on unix machine. This was mainly used for testing. pid_test is from the previous lab to test PID controller.
