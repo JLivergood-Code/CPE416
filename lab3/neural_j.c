@@ -11,7 +11,7 @@
 #define HIDDEN_NODES 3
 #define NUM_INPUTS 2
 
-#define MAX_SAMPLES 200
+#define MAX_SAMPLES 250
 u08 sensor_readings[MAX_SAMPLES][2]; // left and right values
 int sample_count = 0;
 
@@ -48,6 +48,8 @@ void controller(){
     u08 right;
     u08 left_old = 0;
     u08 right_old = 0;
+
+    initialize_network(output_nodes, hidden_nodes);
 
     while (mode == 0){
         //proportional control
@@ -189,7 +191,7 @@ void initialize_network(Node *outNodes, Node *hiddenNodes){
     u08 nodeI;
     u08 weightI;
 
-    for(nodeI = 0; nodeI < NUM_INPUTS; nodeI++){
+    for(nodeI = 0; nodeI < HIDDEN_NODES; nodeI++){
         for(weightI = 0; weightI < NUM_INPUTS; weightI++){
             hiddenNodes[nodeI].weights[weightI] = ((float) rand()) / ((float) RAND_MAX);
         }
@@ -216,6 +218,8 @@ struct motor_command compute_neural_network(uint8_t left, uint8_t right) {
     inputs[0] = left / 255.0;
     inputs[1] = right / 255.0;
 
+    // printf("\ninput values-> l: %f; r: %f\n", inputs[0], inputs[1]);
+
     // Forward pass: Hidden layer
     for (int i = 0; i < HIDDEN_NODES; i++) {
         float sum = 0;
@@ -237,8 +241,8 @@ struct motor_command compute_neural_network(uint8_t left, uint8_t right) {
     }
 
     // Scale to motor speed range (e.g. 0-255)
-    result.l_speed = (uint8_t)(output_nodes[0].output * 255);
-    result.r_speed = (uint8_t)(output_nodes[1].output * 255);
+    result.l_speed = (uint8_t)(output_nodes[0].output * 100);
+    result.r_speed = (uint8_t)(output_nodes[1].output * 100);
 
 
     return result;
@@ -258,24 +262,19 @@ float calculate_out_value(float target, float out, float input){
 
 float calculate_hidden_value(float *targets, float out, float input, Node *output_nodes, u08 weightI){
     float dout = 0;
-    float doutput_tot; // references values calculated for output nodes
+    float doutput_e; // references values calculated for output nodes
     float doutput_net; // references values calculated for output nodes
     float dnet;
     float dweight;
-    float target;
+    // float target;
 
     u08 outI;
     
     for(outI = 0; outI < OUT_NODES; outI++){
-        target = (outI == 0) ? targets[0] : targets[1];
         doutput_net = output_nodes[outI].output * (1 - output_nodes[outI].output);
-        doutput_tot = output_nodes[outI].output - target;
+        doutput_e = output_nodes[outI].output - targets[outI];
 
-        if(weightI < HIDDEN_NODES){
-            dout += doutput_net * doutput_tot * output_nodes[outI].weights[weightI];
-        } else {
-            dout += doutput_net * doutput_tot * output_nodes[outI].bias;
-        }
+        dout += doutput_net * doutput_e * output_nodes[outI].weights[weightI];
     }
     
     dnet = out * (1 - out);
@@ -287,21 +286,18 @@ float calculate_hidden_value(float *targets, float out, float input, Node *outpu
 // }
 void train_neural_network(uint8_t numEpochs) {
     float alpha = 0.3;
-    const float alpha_change = (0.3-0.01) / numEpochs;
+    const float alpha_change = (alpha-0.01) / numEpochs;
     float target;
     u08 nodeI;
     u08 h;
 
-    initialize_network(output_nodes, hidden_nodes);
-
-
     for (int epoch = 0; epoch < numEpochs; epoch++) {
-        for (int i = 0; i < sample_count; i++) {
+        for (int i = 0; i < MAX_SAMPLES; i++) {
             // Normalize inputs
             float inputs[NUM_INPUTS];
             float targets[OUT_NODES];
-            inputs[0] = sensor_readings[i][0] / 255.0;
-            inputs[1] = sensor_readings[i][1] / 255.0;
+            inputs[0] = ((float)sensor_readings[i][0]) / 255.0; // left 
+            inputs[1] = ((float)sensor_readings[i][1]) / 255.0; // right
 
             float target_left, target_right;
             struct motor_command expected;
@@ -315,56 +311,46 @@ void train_neural_network(uint8_t numEpochs) {
 
             // _delay_ms(10);
 
-            target_left = expected.l_speed / 255.0;
-            target_right = expected.r_speed / 255.0;
+            target_left = expected.l_speed / 100.0;
+            target_right = expected.r_speed / 100.0;
             targets[0] = target_left;
             targets[1] = target_right;
 
             // update output values
             // Update output values for hidden layer
-            for (int i = 0; i < HIDDEN_NODES; i++) {
+            for (int h = 0; h < HIDDEN_NODES; h++) {
                 float sum = 0;
                 for (int j = 0; j < NUM_INPUTS; j++) {
-                    sum += inputs[j] * hidden_nodes[i].weights[j];
+                    sum += inputs[j] * hidden_nodes[h].weights[j];
                 }
-                sum += hidden_nodes[i].bias;
-                hidden_nodes[i].output = 1.0 / (1.0 + exp(-sum));
+                sum += hidden_nodes[h].bias;
+                hidden_nodes[h].output = 1.0 / (1.0 + exp(-sum));
             }
 
             // update output values for output layer
-            for (int i = 0; i < OUT_NODES; i++) {
+            for (int o = 0; o < OUT_NODES; o++) {
                 float sum = 0;
                 for (int j = 0; j < HIDDEN_NODES; j++) {
-                    sum += hidden_nodes[j].output * output_nodes[i].weights[j];
+                    sum += hidden_nodes[j].output * output_nodes[o].weights[j];
                 }
-                sum += output_nodes[i].bias;
-                output_nodes[i].output = 1.0 / (1.0 + exp(-sum));
+                sum += output_nodes[o].bias;
+                output_nodes[o].output = 1.0 / (1.0 + exp(-sum));
             }
 
-            // ensure error is going down
-            float error = 0.5 * (
-                pow((target_left - output_nodes[0].output), 2) +
-                pow((target_right - output_nodes[1].output), 2)
-            );
-            // char bufferE[8];
-            // snprintf(bufferE, 8, "%8.2f", error);
-            // print_string(bufferE);
-            lcd_cursor(0,1);
-            print_num(error*100000);
-
+            // printf("Left Expected: %f; Left Compute: %f\nRight Expected: %f; Right Compute: %f\n\n", targets[0], output_nodes[0].output, targets[1] , output_nodes[1].output);
 
 
             // back propogation first
             for(nodeI = 0; nodeI < OUT_NODES; nodeI++){
-                target = (nodeI == 0) ? target_left : target_right;
+                // target = (nodeI == 0) ? target_left : target_right;
                 // iterate through each value in output node weights[]
 
                 //for each hidden node, there is a related input and weight
                 for(h = 0; h < HIDDEN_NODES; h++){
-                    output_new[nodeI].weights[h] = calculate_out_value(target, output_nodes[nodeI].output, hidden_nodes[h].output);
+                    output_new[nodeI].weights[h] = calculate_out_value(targets[nodeI], output_nodes[nodeI].output, hidden_nodes[h].output);
                 }
                 // calculate bias 
-                output_new[nodeI].bias = calculate_out_value(target, output_nodes[nodeI].output, 1);
+                output_new[nodeI].bias = calculate_out_value(targets[nodeI], output_nodes[nodeI].output, 1.0);
             }
 
             // hidden node layer
@@ -375,7 +361,7 @@ void train_neural_network(uint8_t numEpochs) {
                 }
 
                 // calculates new bias
-                hidden_new[nodeI].bias = calculate_hidden_value(targets, hidden_nodes[nodeI].output, 1, output_nodes, nodeI);
+                hidden_new[nodeI].bias = calculate_hidden_value(targets, hidden_nodes[nodeI].output, 1.0, output_nodes, nodeI);
 
             }
 
@@ -395,7 +381,12 @@ void train_neural_network(uint8_t numEpochs) {
                 hidden_nodes[h].bias -= alpha * hidden_new[h].bias;
             }
 
-            
+            float error = 0;
+            for (int k = 0; k < OUT_NODES; k++) {
+                float e = output_nodes[k].output - targets[k];
+                error += e * e;
+            }
+            printf("Epoch %d, Sample %d, Error: %.4f\n", epoch, i, error);
 
         }
         alpha -= alpha_change;

@@ -2,8 +2,15 @@ SELF_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
 BOARD_LIB = $(SELF_DIR)/library
 SOURCE_LIB = $(wildcard $(BOARD_LIB)/*.c)
 CLOCK_RATE = 16000000L
+CC = gcc
+CFLAGS = -g -std=c99 -Wall -O0 -D_XOPEN_SOURCE=700
 
-all: neural_j
+TARGETS = neural_test
+
+all: $(TARGETS)
+
+neural_test: neural_test.c
+	$(CC) $(CFLAGS) -o $@ $^ -lm
 
 sample: sample.c $(wildcard $(BOARD_LIB)/*.c)
 	avr-gcc -I$(BOARD_LIB) -DF_CPU=$(CLOCK_RATE) -Wall -mmcu=atmega645a -O2 -o main.elf sample.c $(wildcard $(BOARD_LIB)/*.c)
