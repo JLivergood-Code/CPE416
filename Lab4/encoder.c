@@ -4,6 +4,8 @@
 #include <avr/interrupt.h>
 #include <stdio.h>
 
+void run_encoder();
+
 void init_encoder() {
     // enable encoder interrupts
     EIMSK = 0;
@@ -28,9 +30,39 @@ ISR(PCINT1_vect) {
    right_encoder++;  //increment right encoder
 }
 
+void motor(uint8_t num, int8_t speed) {
+    if (num == 1) {
+        speed = -speed;
+    }
+    int servo_position = 0.3 * speed + 127;
+    if (servo_position < 97) {
+        servo_position = 97;
+    }
+    if (servo_position > 157) {
+        servo_position = 157;
+    }
+    set_servo(num, servo_position);
+}
+
+void run_encoder(){
+    
+    lcd_cursor(0, 0);
+    print_string("Tick:");
+    while(1){
+        lcd_cursor(0, 1);
+        print_num(left_encoder);
+        motor(0, 20); //left
+        motor(1, 0);//right
+    }
+   
+     //set servo to 140
+    
+}
+
 int main(void) {
     init();  //initialize board hardware
     init_encoder(); //initialize encoder
-
+    run_encoder(); //run encoder
+    set_servo(0, 140);
     return 0;
 }
