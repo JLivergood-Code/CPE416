@@ -75,7 +75,7 @@ void controller(){
 
             // uint8_t left_old = getLeft();
             // uint8_t right_old = getRight();
-            _delay_ms(10);  // slight delay before next sample
+            _delay_ms(100);  // slight delay before next sample
 
             while (get_btn() != 1) {
                 if (sample_count < MAX_SAMPLES) {
@@ -157,12 +157,14 @@ void initialize_network(Node *outNodes, Node *hiddenNodes){
         for(weightI = 0; weightI < NUM_INPUTS; weightI++){
             hiddenNodes[nodeI].weights[weightI] = rand() / RAND_MAX;
         }
+        hiddenNodes[nodeI].bias = rand() / RAND_MAX;
     }
     
     for(nodeI = 0; nodeI < OUT_NODES; nodeI++){
         for(weightI = 0; weightI < HIDDEN_NODES; weightI++){
             outNodes[nodeI].weights[weightI] = rand() / RAND_MAX;
         }
+        outNodes[nodeI].bias = rand() / RAND_MAX;
     }
 }
 // float calculate_out_value(float target, float out, float input){
@@ -226,7 +228,7 @@ struct motor_command compute_neural_network(uint8_t left, uint8_t right) {
         output_nodes[i].output = 1.0 / (1.0 + exp(-sum));
     }
 
-    // Scale to motor speed range (e.g. 0-255)
+    // Scale to motor speed range 
     result.l_speed = (uint8_t)(output_nodes[0].output * 255);
     result.r_speed = (uint8_t)(output_nodes[1].output * 255);
 
@@ -271,6 +273,7 @@ struct motor_command compute_neural_network(uint8_t left, uint8_t right) {
 //     }
 
 // }
+
 void train_neural_network(uint8_t numEpochs) {
     float alpha = 0.1;
     const float alpha_change = (0.1-0.01) / numEpochs;
@@ -297,7 +300,7 @@ void train_neural_network(uint8_t numEpochs) {
             target_left = expected.l_speed / 255.0;
             target_right = expected.r_speed / 255.0;
 
-            // ---- Forward pass ----
+            // Forward pass
             float hidden_outputs[HIDDEN_NODES];
             for (int h = 0; h < HIDDEN_NODES; h++) {
                 float sum = 0;
@@ -320,7 +323,7 @@ void train_neural_network(uint8_t numEpochs) {
                 output_outputs[o] = output_nodes[o].output;
             }
 
-            // ---- Backward pass ----
+            //  Backward pass 
             float output_deltas[OUT_NODES];
             float hidden_deltas[HIDDEN_NODES];
 
