@@ -48,15 +48,23 @@ void run_encoder(){
     
     lcd_cursor(0, 0);
     print_string("Tick:");
-    while(1){
+    // while(1){
+    //     lcd_cursor(0, 1);
+    //     print_num(left_encoder);
+    //     motor(0, 20); //left
+    //     motor(1, 0);//right
+
+    // }
+     while(left_encoder < 100 ){//run until 100 ticks
         lcd_cursor(0, 1);
         print_num(left_encoder);
         motor(0, 20); //left
-        motor(1, 0);//right
+        motor(1, 20);//right
+        
     }
-   
-     //set servo to 140
-    
+    //stop motors after 100 ticks
+     motor(0, 0); //left
+     motor(1, 0);//right
 }
 
 int main(void) {
