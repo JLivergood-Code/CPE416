@@ -55,22 +55,34 @@ void run_encoder(){
     //     motor(1, 0);//right
 
     // }
-     while(left_encoder < 100 ){//run until 100 ticks
+     while(left_encoder < 100 && right_encoder < 100 ){//run until 100 ticks
         lcd_cursor(0, 1);
         print_num(left_encoder);
+        lcd_cursor(5, 1);
+        print_num(right_encoder);
         motor(0, 20); //left
         motor(1, 20);//right
         
     }
+    left_encoder = right_encoder = 0;
     //stop motors after 100 ticks
-     motor(0, 0); //left
-     motor(1, 0);//right
+
+    //turning stuff
+    while(left_encoder < 15 && right_encoder < 15 ){//run until 100 ticks
+        lcd_cursor(0, 1);
+        print_num(left_encoder);
+        lcd_cursor(5, 1);
+        print_num(right_encoder);
+        motor(0, -20); //left
+        motor(1, 20);//right
+        
+    }
 }
 
 int main(void) {
     init();  //initialize board hardware
     init_encoder(); //initialize encoder
     run_encoder(); //run encoder
-    set_servo(0, 140);
+    
     return 0;
 }
