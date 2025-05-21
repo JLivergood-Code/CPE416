@@ -104,6 +104,92 @@ void run_encoder(){
     }
 }
 
+
+
+void run_encoder_bowtie(){
+    
+    lcd_cursor(0, 0);
+    print_string("Tick:");
+    // while(1){
+    //     lcd_cursor(0, 1);
+    //     print_num(left_encoder);
+    //     motor(0, 20); //left
+    //     motor(1, 0);//right
+
+    // }
+    u08 num_ticks = 108;
+    u08 num_ticks_diag = 155;
+    while((left_encoder < num_ticks) && (right_encoder < num_ticks )){//run until 100 ticks
+            lcd_cursor(0, 1);
+            print_num(left_encoder);
+            lcd_cursor(5, 1);
+            print_num(right_encoder);
+            motor(0, 20); //left
+            motor(1, 20);//right
+            
+        }
+    left_encoder = right_encoder = 0;
+    clear_screen();
+    turn(-1, 140);
+    left_encoder = right_encoder = 0;
+    while((left_encoder < num_ticks_diag) && (right_encoder < num_ticks_diag )){//run until 100 ticks
+            lcd_cursor(0, 1);
+            print_num(left_encoder);
+            lcd_cursor(5, 1);
+            print_num(right_encoder);
+            motor(0, 20); //left
+            motor(1, 20);//right
+            
+        }
+    left_encoder = right_encoder = 0;
+    clear_screen();
+    turn(1, 137);
+    left_encoder = right_encoder = 0;
+    while((left_encoder < num_ticks) && (right_encoder < num_ticks) ){//run until 100 ticks
+            lcd_cursor(0, 1);
+            print_num(left_encoder);
+            lcd_cursor(5, 1);
+            print_num(right_encoder);
+            motor(0, 20); //left
+            motor(1, 20);//right
+            
+        }
+    left_encoder = right_encoder = 0;
+    clear_screen();
+    turn(1, 137);
+    left_encoder = right_encoder = 0;
+    while((left_encoder < num_ticks_diag) && (right_encoder < num_ticks_diag) ){//run until 100 ticks
+            lcd_cursor(0, 1);
+            print_num(left_encoder);
+            lcd_cursor(5, 1);
+            print_num(right_encoder);
+            motor(0, 20); //left
+            motor(1, 20);//right
+            
+        }
+    
+    // for(u08 i = 0; i < 4; i++){
+    //     u08 num_ticks = 108;
+
+    //     left_encoder = right_encoder = 0;
+
+    //     while(left_encoder < num_ticks && right_encoder < num_ticks ){//run until 100 ticks
+    //         lcd_cursor(0, 1);
+    //         print_num(left_encoder);
+    //         lcd_cursor(5, 1);
+    //         print_num(right_encoder);
+    //         motor(0, 20); //left
+    //         motor(1, 20);//right
+            
+    //     }
+    //     left_encoder = right_encoder = 0;
+    //     //stop motors after 100 ticks
+
+    //     //turning stuff
+    //     turn(-1, 90);
+    // }
+}
+
 int main(void) {
     init();  //initialize board hardware
     init_encoder(); //initialize encoder
@@ -113,7 +199,31 @@ int main(void) {
 
     while(get_btn() == 0);
 
-    run_encoder(); //run encoder
+
+    // int mode = 0; // 0 = square, 1 = bowtie
+
+    // while (1) {
+    //     // Wait for button press (debounced)
+    //     if (get_btn() == 1) {
+    //         while(get_btn() == 1);  // Wait for button release
+    //         mode = !mode;           // Toggle between 0 and 1
+    //     }
+
+    //     if (mode == 0) {
+            
+    //         lcd_cursor(0,0);
+    //         print_string("Square");
+    //         run_encoder();   // Run square pattern
+    //     } else {
+            
+    //         lcd_cursor(0,0);
+    //         print_string("Bowtie");
+    //         run_encoder_bowtie();   // Run bowtie pattern
+    //     }
+    // }
+// }
+//     run_encoder(); //run encoder in square pattern
     
+    run_encoder_bowtie(); //run encoder in bowtie pattern
     return 0;
 }
