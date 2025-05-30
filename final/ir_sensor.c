@@ -22,6 +22,10 @@ void motor(uint8_t num, int8_t speed) {
     set_servo(num, servo_position);
 }
 
+uint8_t get_range(){
+    return 165 - analog(ANALOG0_PIN);
+}
+
 void read_ir(){
 
     int analog1 = analog(ANALOG0_PIN);
@@ -48,25 +52,19 @@ void swivel_motor(){
             direction = -1;
         }
 
-        degrees = degrees + (direction * DEGREE_CHANGE);
+        degrees = degrees + (direction * DELTA_FINE);
 
         // read_ir();
 
-        clear_screen();
-        lcd_cursor(0,0);
-        print_string("Degrees:");
-        lcd_cursor(0, 1);
-        print_num(degrees);
+        set_servo(2, degrees);
 
-        set_servo(2, 90);
-
-        // _delay_ms(10);
+        _delay_ms(5);
 
     }
 
 }
 
-int8_t get_closest(){
+uint8_t get_closest(){
 
     u08 degrees = 0;
     u08 range = 0;
@@ -74,9 +72,12 @@ int8_t get_closest(){
     u08 min_range = -1;
     u08 min_range_deg = 0;
     // int8_t direction = 1;
+    set_servo(2, 0);
+
+    _delay_ms(250);
 
     while(degrees <= 180){
-        range = analog(ANALOG0_PIN);
+        range = get_range();
 
         if(range < min_range){
             min_range = range;
@@ -84,10 +85,26 @@ int8_t get_closest(){
         }
 
         degrees += DELTA_LARGE;
+        set_servo(2, degrees);
+
+        clear_screen();
+        lcd_cursor(0,0);
+        print_string("Degrees:");
+        lcd_cursor(0, 1);
+        print_num(degrees);
+
+        lcd_cursor(5, 1);
+        print_num(range);
+
+        _delay_ms(5);
     }
 
+    
+    
+    
     // typecasts to signed int, returns degrees from center
-    return ((int8_t) degrees - 90);   
+    // return ((int8_t) min_range_deg - 90);  
+    return min_range_deg;
 
 }
 
@@ -106,8 +123,8 @@ Brainstorm:
 
 */
 
-void on_line(){
-    return false;
+int on_line(){
+    return 0;
 }
 
 void track(){
@@ -126,7 +143,7 @@ void track(){
 
         closest_range = analog(ANALOG0_PIN);
 
-        while(!on_line()){
+        while(on_line() == 0){
             cur_range = analog(ANALOG0_PIN);
 
             // if current reading is larger, switch swivel directions
@@ -139,15 +156,16 @@ void track(){
             cur_degree += dir;
             set_servo(RANGE_SERVO, closest_deg);
 
-            dif_center = cur_degree - 90
+            dif_center = cur_degree - 90;
 
             // PID Controller that takes in difference from center and adjusts motors accordingly
-            motor_pid(dif_center, dif_old);
+            pid(dif_center, dif_old);
             dif_old = dif_center;
         }
 
     }
 
+    
 
 
 }
@@ -162,5 +180,19 @@ int main(){
     motor(1, 0);
     motor(0, 0);
 
-    swivel_motor();
+    int16_t degrees = 0;
+
+    degrees = get_closest();
+
+    _delay_ms(20);
+    // set_servo(2, degrees);
+    set_servo(2, degrees);
+    _delay_ms(200);
+
+    clear_screen();
+    lcd_cursor(0,0);
+    print_string("Final:");
+    lcd_cursor(0, 1);
+    print_num(degrees);
+    
 }

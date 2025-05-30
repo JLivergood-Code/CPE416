@@ -3,8 +3,10 @@ BOARD_LIB = $(SELF_DIR)/library
 SOURCE_LIB = $(wildcard $(BOARD_LIB)/*.c)
 CLOCK_RATE = 16000000L
 
-ir_sensor: ir_sensor.c $(wildcard $(BOARD_LIB)/*.c)
-	avr-gcc -I$(BOARD_LIB) -DF_CPU=$(CLOCK_RATE) -Wall -mmcu=atmega645a -O2 -o main.elf ir_sensor.c $(wildcard $(BOARD_LIB)/*.c)
+FILES = ir_sensor.c pid.c
+
+ir_sensor: $(FILES) $(wildcard $(BOARD_LIB)/*.c)
+	avr-gcc -I$(BOARD_LIB) -DF_CPU=$(CLOCK_RATE) -Wall -mmcu=atmega645a -O2 -o main.elf $(FILES) $(wildcard $(BOARD_LIB)/*.c)
 	avr-objcopy -O ihex main.elf main.hex
 	avr-size main.elf
 
