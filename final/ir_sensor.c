@@ -114,6 +114,7 @@ void track(){
     int8_t closest_deg = 0;
     u08 closest_range = 0;
     int8_t dif_center = 0;
+    int8_t dif_old = 0; 
     u08 cur_range = 0;
     u08 cur_degree = 0;
     int8_t dir = 1;
@@ -141,7 +142,8 @@ void track(){
             dif_center = cur_degree - 90
 
             // PID Controller that takes in difference from center and adjusts motors accordingly
-            motor_pid(dif_center);
+            motor_pid(dif_center, dif_old);
+            dif_old = dif_center;
         }
 
     }
