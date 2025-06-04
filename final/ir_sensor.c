@@ -147,10 +147,38 @@ u16 getRight(){
     return analog(ANALOG5_PIN);
 }
 
-int on_line(){
+int8_t on_line_b(){
 
-    return (getLeft() > LINE_THRESHOLD || getRight() > LINE_THRESHOLD);
+    if(getLeft() > LINE_THRESHOLD){
+        return 1;
+    }
+
+    if(getRight() > LINE_THRESHOLD){
+        return 2;
+    }
+
+
+    return -1;
 }
+
+int8_t on_line_r(){
+    if(getRight() > LINE_THRESHOLD){
+        return 2;
+    }
+
+
+    return -1;
+}
+
+int8_t on_line_l(){
+
+    if(getLeft() > LINE_THRESHOLD){
+        return 1;
+    }
+    return -1;
+}
+
+
 // void track(){
 //     int8_t closest_deg = 0;
 //     u08 closest_range = 0;
@@ -198,6 +226,10 @@ int on_line(){
 void turn_in_place_to_center(uint8_t closest_angle) {
     int total_delay = closest_angle * TURN_TIME_PER_DEGREE;
 
+    clear_screen(); 
+    lcd_cursor(0, 0);
+    print_string("Turning");
+
     // Always rotate clockwise (left wheel forward, right wheel backward)
     motor(0, ROTATION_SPEED);
     motor(1, -ROTATION_SPEED);
@@ -218,12 +250,51 @@ void turn_in_place_to_center(uint8_t closest_angle) {
 
 
 void drive_forward() {
+    int8_t line_sensor;
+    
+    clear_screen(); 
+    lcd_cursor(0, 0);
+    print_string("Forward");
+
+
     motor(0, MOVE_SPEED);
     motor(1, MOVE_SPEED);
 
-    while(!on_line()) {
+    while((line_sensor = on_line_b()) < 0) {
         _delay_ms(50);  // Check every 50 ms
     }
+
+    motor(0, 0);
+    motor(1, 0);
+
+    clear_screen(); 
+    lcd_cursor(0, 0);
+    print_string("On Line");
+
+    // left sensor, move right
+    if(line_sensor == 1){
+        lcd_cursor(0, 1);
+        print_string("Left");
+        // move left motor forward
+        motor(1, 20);
+        while((line_sensor = on_line_r()) != 2){
+            _delay_ms(50);
+        }
+
+    } else {
+        // move left motor forward
+        lcd_cursor(0, 1);
+        print_string("Right");
+        motor(0, 20);
+        while((line_sensor = on_line_l()) != 1){
+            _delay_ms(50);
+        }
+        // move backwards until both sensors don't read the line
+        
+    }
+    motor(0, -MOVE_SPEED);
+    motor(1, -MOVE_SPEED);
+    _delay_ms(1500);
 
     motor(0, 0);
     motor(1, 0);
@@ -241,7 +312,7 @@ uint8_t sweep_for_closest() {
         raw = analog(ANALOG0_PIN);
         distance = (179.0 - raw) / 5.75;
         if (distance < 3.0) distance = 3.0;
-        if (distance > 21.0) distance = 21.0;
+        if (distance > 50.0) distance = 50.0;
 
         if (distance < min_distance) {
             min_distance = distance;
@@ -277,7 +348,7 @@ uint8_t smooth_rotate_and_find_closest() {
         // --- LCD Display during rotation ---
         clear_screen();
         lcd_cursor(0, 0);
-        print_string("A:");                   // Current angle
+        print_string("Search:");                   // Current angle
         print_num((int)current_angle);        // Cast to int for display
 
         lcd_cursor(0, 1);
@@ -293,11 +364,9 @@ uint8_t smooth_rotate_and_find_closest() {
     motor(1, 0);
 
     // --- LCD Display after rotation ---
-    clear_screen(); 
-    lcd_cursor(0, 0);
-    print_string("B");
-    lcd_cursor(0, 1);
-    print_num((uint8_t)best_angle);
+    
+    // lcd_cursor(0, 1);
+    // print_num((uint8_t)best_angle);
 
     return (uint8_t)best_angle;
 }
@@ -323,23 +392,19 @@ int main(){
     motor(1, 0);
     motor(0, 0);
 
-    // int16_t degrees = 0;
+    
 
-    // degrees = get_closest();
+    while(!get_btn()) {
+        clear_screen();
+        lcd_cursor(0, 0);
+        // print_string("Search:");                   // Current angle
+        print_num(getLeft());        // Cast to int for display
 
-    // _delay_ms(20);
-    // // set_servo(2, degrees);
-     set_servo(2, 90);
-    // _delay_ms(200);
-
-    // clear_screen();
-    // lcd_cursor(0,0);
-    // print_string("Final:");
-    // lcd_cursor(0, 1);
-    // print_num(degrees);
-    //track();
-   // Step 1: Initial sweep
-    //uint8_t closest_angle = sweep_for_closest();
+        lcd_cursor(0, 1);
+        // print_string("R:");
+        print_num(getRight());
+        _delay_ms(20);
+    }
 
     // while (1) {
     //     uint8_t closest = sweep_for_closest();
@@ -351,7 +416,7 @@ int main(){
      while (1) {
         uint8_t closest_angle = smooth_rotate_and_find_closest();
         _delay_ms(500);  // Short delay to stabilize after turning
-        turn_in_place_to_center(closest_angle-10);  // Rotate back to target, adjust argument to center robot to can
+        turn_in_place_to_center(closest_angle);  // Rotate back to target, adjust argument to center robot to can
         _delay_ms(500);  // Short delay to stabilize after turning
         drive_forward();         // Push can
     }
